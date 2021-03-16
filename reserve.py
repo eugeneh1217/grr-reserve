@@ -1,7 +1,10 @@
 import time
 import os
+from credentials import accounts
 
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.common.by import By
 
 CHROMEDRIVER_PATH = os.path.dirname(os.path.realpath(__file__)) + '/chromedrivers/'
 GRR_RESERVE_BASE = 'https://grandriverrocks.com/waterloo/reservations/'
@@ -12,7 +15,6 @@ SECTIONS = {
 }
 
 CALENDAR_ID = 'start_date_calendar'
-FORM_ID = 'theform'
 
 ZONE_PAGE_IDS = {
     'calendar': 'start_date_calendar',
@@ -64,7 +66,7 @@ class Reserver:
                             table_data.find_element_by_tag_name('a').click()
                     except ValueError:
                         continue
-        except:
+        except StaleElementReferenceException:
             pass
         self.driver.switch_to.default_content()
         time.sleep(LOAD_PAUSE)
@@ -73,33 +75,86 @@ class Reserver:
         self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
         try:
             event_table = self.get_element(element_id=ZONE_PAGE_IDS['event_table']).find_element_by_xpath('tbody[1]')
-            print(len(event_table))
             for table_row in event_table.find_elements_by_tag_name('tr'):
-                print(table_row.text + 'new row')
-                if start_time in table_row.text and 'spaces' in table_row.text:
-                    print(f"clicked {table_row.find_element_by_xpath('td[4]/a[1]').get_attribute('class')}")
+                # print(table_row.text + 'new row')
+                if start_time in table_row.text and 'space' in table_row.text:
+                    # print(f"clicked {table_row.find_element_by_xpath('td[4]/a[1]').get_attribute('class')}")
                     table_row.find_element_by_xpath('td[4]/a[1]').click()
+                    break
                 else:
-                    print(table_row.text)
-        except:
+                    print(table_row.text + '\n')
+        except StaleElementReferenceException:
             pass
         self.driver.switch_to.default_content()
         time.sleep(LOAD_PAUSE)
 
-    def sign_in(self, username, password):
-
-
-    def select_slot(self, section, day):
-        self.increment_participants()
+    def select_slot(self, section, day, start_time):
         self.select_day(day)
-        self.select_event('10 AM')
+        self.increment_participants()
+        self.select_event(start_time)
 
-    def book(self, section, day):
+    def open_login(self):
+        self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
+        self.driver.find_element_by_link_text('Log In or Create Profile').click()
+        self.driver.switch_to.default_content()
+        time.sleep(LOAD_PAUSE)
+
+    def login(self, email, name, password):
+        self.driver.switch_to.frame(self.driver.find_element_by_id('rgp00-embedded-modal-frame'))
+        self.driver.find_element_by_name('email').send_keys(email)
+        self.driver.find_element_by_name('password').send_keys(password)
+        self.driver.find_element_by_link_text('Log In').click()
+        time.sleep(LOAD_PAUSE)
+        self.driver.find_element_by_link_text('Done').click()
+        self.driver.switch_to.default_content()
+        self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
+        time.sleep(LOAD_PAUSE)
+        self.driver.find_elements_by_link_text(name)[1].click()
+        time.sleep(LOAD_PAUSE)
+        form = self.driver.find_element_by_id(ZONE_PAGE_IDS['form'])
+        form.find_element_by_id('pfirstname-pindex-1-1').click()
+        form.find_element_by_id('plastname-pindex-1-1').click()
+        self.driver.switch_to.default_content()
+
+    def fill_form(self):
+        self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
+        form = self.driver.find_element_by_id(ZONE_PAGE_IDS['form'])
+        select_payment = form.find_element_by_xpath('fieldset[2]/div[2]/select[1]')
+        for payment_option in select_payment.find_elements_by_tag_name('option'):
+            if 'Membership' in payment_option.text:
+                payment_option.click()
+        form.find_element_by_xpath('fieldset[3]/div[2]/span[1]/input[1]').click()
+        form.find_element_by_xpath('fieldset[4]/div[2]/select[1]/option[2]').click()
+        form.find_element_by_xpath('fieldset[5]/div[2]/select[1]/option[2]').click()
+        form.find_element_by_xpath('fieldset[6]/div[2]/select[1]/option[2]').click()
+        form.find_element_by_partial_link_text('CONTINUE').click()
+        self.driver.switch_to.default_content()
+
+    def sign_in(self, email, name, password):
+        self.open_login()
+        self.login(email, name, password)
+        self.fill_form()
+
+    # def complete_booking(self):
+    #     self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
+    #     form = self.driver.find_element_by_id(ZONE_PAGE_IDS['form'])
+    #     checkbox = form.find_elements_by_tag_name("fieldset")
+    #     time.sleep(LOAD_PAUSE)
+    #     print(checkbox[5].find_element_by_xpath('div[2]').find_element_by_xpath('input[1]').get_attribute('type'))
+    #     # checkbox = form.find_element_by_xpath('fieldset[5]/div[2]/input[1]')
+    #     # print(checkbox.get_attribute("class"))
+    #     self.driver.switch_to.default_content()
+
+
+
+    def book(self, section, day, start_time, email):
         self.open(GRR_RESERVE_BASE + SECTIONS[section])
-        self.select_slot(section, day)
-        time.sleep(5)
+        self.select_slot(section, day, start_time)
+        self.sign_in(email, accounts[email].first_name, accounts[email].password)
+        self.complete_booking()
+        time.sleep(200)
 
 r = Reserver(89)
-r.book('front', 19)
+r.book('front', 19, '10 AM', 'eugeneh1217@gmail.com')
 # time.sleep(60)
 r.close()
