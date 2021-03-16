@@ -1,6 +1,7 @@
 import argparse
 import schedule
 import datetime
+import time
 
 from reserve import Reserver
 
@@ -15,6 +16,8 @@ DAY_TO_NUM = {
     'saturday': 5,
     'sunday': 6,
 }
+
+CYCLE = 60 * 30
 
 front = 1
 
@@ -47,6 +50,10 @@ def main(*args):
     schedule.every().sunday.do(book_on(reserver, DAY_TO_NUM['thursday']))
     schedule.every().wednesday.do(book_on(reserver, DAY_TO_NUM['sunday']))
     schedule.every().friday.do(book_on(reserver, DAY_TO_NUM['tuesday']))
+
+    while True:
+        schedule.run_pending()
+        time.sleep(CYCLE)
 
 if __name__ == '__main__':
     main()
