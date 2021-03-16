@@ -76,9 +76,7 @@ class Reserver:
         try:
             event_table = self.get_element(element_id=ZONE_PAGE_IDS['event_table']).find_element_by_xpath('tbody[1]')
             for table_row in event_table.find_elements_by_tag_name('tr'):
-                # print(table_row.text + 'new row')
                 if start_time in table_row.text and 'space' in table_row.text:
-                    # print(f"clicked {table_row.find_element_by_xpath('td[4]/a[1]').get_attribute('class')}")
                     table_row.find_element_by_xpath('td[4]/a[1]').click()
                     break
                 else:
@@ -135,26 +133,12 @@ class Reserver:
         self.login(email, name, password)
         self.fill_form()
 
-    # def complete_booking(self):
-    #     self.driver.switch_to.frame(self.driver.find_element_by_tag_name('iframe'))
-    #     form = self.driver.find_element_by_id(ZONE_PAGE_IDS['form'])
-    #     checkbox = form.find_elements_by_tag_name("fieldset")
-    #     time.sleep(LOAD_PAUSE)
-    #     print(checkbox[5].find_element_by_xpath('div[2]').find_element_by_xpath('input[1]').get_attribute('type'))
-    #     # checkbox = form.find_element_by_xpath('fieldset[5]/div[2]/input[1]')
-    #     # print(checkbox.get_attribute("class"))
-    #     self.driver.switch_to.default_content()
-
-
-
     def book(self, section, day, start_time, email):
         self.open(GRR_RESERVE_BASE + SECTIONS[section])
         self.select_slot(section, day, start_time)
         self.sign_in(email, accounts[email].first_name, accounts[email].password)
-        self.complete_booking()
-        time.sleep(200)
+        time.sleep(LOAD_PAUSE)
 
-r = Reserver(89)
-r.book('front', 19, '10 AM', 'eugeneh1217@gmail.com')
-# time.sleep(60)
-r.close()
+# r = Reserver(89)
+# r.book('front', 19, '10 AM', 'eugeneh1217@gmail.com')
+# r.close()
