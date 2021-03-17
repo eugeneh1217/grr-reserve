@@ -26,8 +26,10 @@ def next_day(day: int):
     days_ahead = (day - today.weekday()) % 7
     return (today + datetime.timedelta(days=days_ahead)).day
 
-def book_on(reserver: Reserver, day: int):
+def book_on(chrome_version: int, day: int):
+    global front
     front *= -1
+    reserver = Reserver(chrome_version)
     reserver.book(
         'front' if front == 1 else 'back',
         next_day(day),
@@ -48,14 +50,15 @@ def get_args(*args):
         args.chrome_version = DEFAULT_CHROME_VERSION
     return args
 
-def schedule(reserver: Reserver, time: str):
-    schedule.every().sunday.at(time).do(book_on(reserver, DAY_TO_NUM['thursday']))
-    schedule.every().wednesday.at(time).do(book_on(reserver, DAY_TO_NUM['sunday']))
-    schedule.every().friday.at(time).do(book_on(reserver, DAY_TO_NUM['tuesday']))
+def schedule_bookings(chrome_version: int, time: str):
+    schedule.every().sunday.at(time).do(book_on, chrome_version, DAY_TO_NUM['thursday'])
+    schedule.every().wednesday.at(time).do(book_on, chrome_version, DAY_TO_NUM['sunday'])
+    schedule.every().friday.at(time).do(book_on, chrome_version, DAY_TO_NUM['tuesday'])
 
 def main(*args):
-    schedule(Reserver(get_args(args).chrome_version), '18:00')
-
+    args = get_args(args)
+    schedule_bookings(args.chrome_version, '18:00')
+    print(f"Bot started at: {datetime.datetime.now().strftime('%H:%M:%S')}")
     while True:
         schedule.run_pending()
         time.sleep(CYCLE)
