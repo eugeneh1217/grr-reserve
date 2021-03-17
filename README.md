@@ -4,6 +4,11 @@ Last updated 3/17/2021.
 
 # Usage
 Install required modules:
-```> pip install -r requirements.txt```
+```
+> pip install -r requirements.txt
+```
+
 Run bot:
-```python -m bot```
+```
+> python -m bot
+```
