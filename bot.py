@@ -26,7 +26,7 @@ def next_day(day: int):
     days_ahead = (day - today.weekday()) % 7
     return (today + datetime.timedelta(days=days_ahead)).day
 
-def book_on(reserver, day):
+def book_on(reserver: Reserver, day: int):
     front *= -1
     reserver.book(
         'front' if front == 1 else 'back',
@@ -35,7 +35,7 @@ def book_on(reserver, day):
         'eugeneh1217@gmail.com'
     )
 
-def main(*args):
+def get_args(*args):
     parser = argparse.ArgumentParser(description='Book time slots for grr in accordance to schedule.')
     parser.add_argument(
         '--chrome-version', '-v',
@@ -46,10 +46,15 @@ def main(*args):
     args = parser.parse_args()
     if args.chrome_version is None:
         args.chrome_version = DEFAULT_CHROME_VERSION
-    reserver = Reserver(args.chrome_version)
-    schedule.every().sunday.do(book_on(reserver, DAY_TO_NUM['thursday']))
-    schedule.every().wednesday.do(book_on(reserver, DAY_TO_NUM['sunday']))
-    schedule.every().friday.do(book_on(reserver, DAY_TO_NUM['tuesday']))
+    return args
+
+def schedule(reserver: Reserver, time: str):
+    schedule.every().sunday.at(time).do(book_on(reserver, DAY_TO_NUM['thursday']))
+    schedule.every().wednesday.at(time).do(book_on(reserver, DAY_TO_NUM['sunday']))
+    schedule.every().friday.at(time).do(book_on(reserver, DAY_TO_NUM['tuesday']))
+
+def main(*args):
+    schedule(Reserver(get_args(args).chrome_version), '18:00')
 
     while True:
         schedule.run_pending()
