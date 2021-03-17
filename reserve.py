@@ -3,7 +3,7 @@ import os
 from credentials import accounts
 
 from selenium import webdriver
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.common.by import By
 
 CHROMEDRIVER_PATH = os.path.dirname(os.path.realpath(__file__)) + '/chromedrivers/'
@@ -79,8 +79,6 @@ class Reserver:
                 if start_time in table_row.text and 'space' in table_row.text:
                     table_row.find_element_by_xpath('td[4]/a[1]').click()
                     break
-                else:
-                    print(table_row.text + '\n')
         except StaleElementReferenceException:
             pass
         self.driver.switch_to.default_content()
@@ -134,11 +132,18 @@ class Reserver:
         self.fill_form()
 
     def book(self, section, day, start_time, email):
-        self.open(GRR_RESERVE_BASE + SECTIONS[section])
-        self.select_slot(section, day, start_time)
-        self.sign_in(email, accounts[email].first_name, accounts[email].password)
-        time.sleep(LOAD_PAUSE)
+        try:
+            self.open(GRR_RESERVE_BASE + SECTIONS[section])
+            self.select_slot(section, day, start_time)
+            self.sign_in(email, accounts[email].first_name, accounts[email].password)
+            time.sleep(LOAD_PAUSE)
+        except NoSuchElementException:
+            print("NO SPACES AVAILABLE!")
 
-# r = Reserver(89)
-# r.book('front', 19, '10 AM', 'eugeneh1217@gmail.com')
-# r.close()
+def main():
+    r = Reserver(89)
+    r.book('front', 21, '10 AM', 'eugeneh1217@gmail.com')
+    r.close()
+
+if __name__ == '__main__':
+    main()
